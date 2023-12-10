@@ -1,17 +1,28 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import NewsList from './Components/NewsList';
-import './App.css'; 
+import NewsItem from './Components/NewsItem';
 
 const App = () => {
   const [news, setNews] = useState([]);
-  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchNewsData = async () => {
+      const response = await fetch('https://newsapi.org/v2/everything?domains=wsj.com&apiKey=1a3408fa2f3e4af89fb08a64e60d02e7');
+      const data = await response.json();
+      setNews(data.articles);
+    };
+
+    fetchNewsData();
+  }, []);
 
   return (
-    <div>
-      <h1>News Dashboard</h1>
-      {error && <p>{error}</p>}
-      <NewsList news={news} setNews={setNews} setError={setError} />
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<NewsList news={news} />} />
+        <Route path="/news/:id" element={<NewsItem news={news} />} />
+      </Routes>
+    </Router>
   );
 };
 

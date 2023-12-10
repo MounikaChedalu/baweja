@@ -1,37 +1,46 @@
-import React, { useEffect, useState } from 'react';
-import NewsItem from './NewsItem';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import './NewsList.css';
 
-const NewsList = ({ news = [], setNews, setError }) => {
+const NewsList = ({ news }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 5;
+  const [searchTerm, setSearchTerm] = useState('');
+  const [originalNewsData, setOriginalNewsData] = useState(news);
+  const [filteredNews, setFilteredNews] = useState(news);
+  const articlesPerPage = 9;
 
   useEffect(() => {
-    const API_URL = `https://newsapi.org/v2/top-headlines?country=us&apiKey=1a3408fa2f3e4af89fb08a64e60d02e7`;
-
-    const fetchNews = async () => {
-      try {
-        const response = await fetch(API_URL);
-        const data = await response.json();
-        if (data.articles) {
-          console.log(data.articles);
-          setNews(data.articles);
-        } else {
-          setError('Error fetching news. Please try again later.');
-        }
-      } catch (error) {
-        setError('Error fetching news. Please try again later.');
-      }
-    };
-
-    fetchNews();
-  }, [currentPage, setNews, setError]);
+    setOriginalNewsData(news);
+    setFilteredNews(news); 
+  }, [news]);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
 
+  const handleSearch = () => {
+    if (!searchTerm.trim()) {
+      alert('Please enter some text before searching.');
+      return;
+    }
+    const filteredData = originalNewsData.filter((article) =>
+      article.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    setFilteredNews(filteredData);
+  };
+
+  const resetSearch = () => {
+    setSearchTerm('');
+    setFilteredNews(originalNewsData);
+  };
+
   const getPageNumbers = () => {
-    const totalPages = Math.ceil(news.length / pageSize);
+    if (!filteredNews || !Array.isArray(filteredNews) || filteredNews.length === 0) {
+      return null;
+    }
+
+    const totalPages = Math.ceil(filteredNews.length / articlesPerPage);
     const pageNumbers = [];
 
     pageNumbers.push(
@@ -49,12 +58,13 @@ const NewsList = ({ news = [], setNews, setError }) => {
         <button
           key={i}
           onClick={() => handlePageChange(i)}
-          className={i === currentPage ? 'active' : ''}
+          className={i === currentPage ? 'active selected' : ''}
         >
           {i}
         </button>
       );
     }
+
     pageNumbers.push(
       <button
         key="next"
@@ -69,18 +79,47 @@ const NewsList = ({ news = [], setNews, setError }) => {
   };
 
   const getPageNews = () => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    return news.slice(startIndex, endIndex);
+    if (!filteredNews || !Array.isArray(filteredNews) || filteredNews.length === 0) {
+      return [];
+    }
+
+    const startIndex = (currentPage - 1) * articlesPerPage;
+    const endIndex = startIndex + articlesPerPage;
+    return filteredNews.slice(startIndex, endIndex);
   };
 
   return (
-    <div className="news-list">
-            {getPageNews().map((article, index) => (
-        <NewsItem key={index} article={article} />
-      ))}
-      <div className="pagination">
-        {getPageNumbers()}
+    <div className='total-news-container'>
+      <h1 className='news-heading'>News Dashboard</h1>
+      <div className="search-container">
+        <input
+          type="text"
+          placeholder="Search news..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className='search-input'
+        />
+        <button onClick={() => { handleSearch(); setCurrentPage(1); }} className='search-btn'>
+          Search
+        </button>
+        <button onClick={() => resetSearch()} className='reset-btn'>
+          Reset
+        </button>
+      </div>
+      <div className='news-list'>
+        {getPageNews().map((article, index) => (
+          <div key={index} className="news-item">
+            <h2>{article.title}</h2>
+            {article.urlToImage && <img src={article.urlToImage} alt='articleimage' />}
+            <p>{article.description}</p>
+            <p>Published at: {article.publishedAt}</p>
+            <Link to={`/news/${index + 1}`}>
+              <button>Read More</button>
+            </Link>
+          </div>
+        ))}
+
+        <div className="pagination">{getPageNumbers()}</div>
       </div>
     </div>
   );

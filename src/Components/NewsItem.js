@@ -21,7 +21,7 @@ const NewsItem = ({ news }) => {
       <h4>Source: {article.source && article.source.name}</h4>
       <h5>Author:{article.author}</h5>
       <h5>Published at: {article.publishedAt}</h5>
-      <a href={article.url} target="_blank" rel="noopener noreferrer" className='article-url1'>
+      <a href={article.url} target="_blank" rel="noopener noreferrer" className='article-url'>
         {article.url}
       </a>
           </div>
